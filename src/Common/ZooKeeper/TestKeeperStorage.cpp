@@ -151,10 +151,11 @@ struct TestKeeperStorageCreateRequest final : public TestKeeperStorageRequest
                 created_node.is_sequental = request.is_sequential;
                 std::string path_created = request.path;
 
+                ++it->second.seq_num;
+
                 if (request.is_sequential)
                 {
                     auto seq_num = it->second.seq_num;
-                    ++it->second.seq_num;
 
                     std::stringstream seq_num_str;      // STYLE_CHECK_ALLOW_STD_STRING_STREAM
                     seq_num_str.exceptions(std::ios::failbit);
@@ -169,7 +170,7 @@ struct TestKeeperStorageCreateRequest final : public TestKeeperStorageRequest
                 if (request.is_ephemeral)
                     ephemerals[session_id].emplace(path_created);
 
-                undo = [&container, &ephemerals, session_id, path_created, is_sequential = request.is_sequential, is_ephemeral = request.is_ephemeral, parent_path = it->first]
+                undo = [&container, &ephemerals, session_id, path_created, is_ephemeral = request.is_ephemeral, parent_path = it->first]
                 {
                     container.erase(path_created);
                     if (is_ephemeral)
@@ -178,8 +179,7 @@ struct TestKeeperStorageCreateRequest final : public TestKeeperStorageRequest
                     --undo_parent.stat.cversion;
                     --undo_parent.stat.numChildren;
 
-                    if (is_sequential)
-                        --undo_parent.seq_num;
+                    --undo_parent.seq_num;
                 };
 
                 ++it->second.stat.cversion;
